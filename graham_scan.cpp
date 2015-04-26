@@ -23,8 +23,8 @@ static void find_lowest (std::vector<Coordinate>& vec)
 
 static double distance (Coordinate a, Coordinate b)
 {
-    int x = std::abs(a.get_x() - b.get_x());
-    int y = std::abs(a.get_y() - b.get_y());
+    int x = a.get_x() - b.get_x();
+    int y = a.get_y() - b.get_y();
 
     return std::sqrt(x*x + y*y);
 }
@@ -34,7 +34,7 @@ static double rotation (Coordinate c)
     int y = c.get_y() - low.get_y();
     double angle = std::asin(y / distance(c, low)) * 180 / M_PI;
 
-    if(c.get_x() < low.get_x()) angle += 90;
+    if(c.get_x() < low.get_x()) angle += 90 - angle;
 
     return angle; //in rad
 }
@@ -62,8 +62,12 @@ static int rotation_section(Coordinate beg, Coordinate end, Coordinate new_p)
 
 std::stack<Coordinate> graham_scan (std::vector<Coordinate>& vec)
 {
-    find_lowest(vec);
-    std::sort(vec.begin(), vec.end(), cmp);
+find_lowest(vec);
+std::sort(vec.begin(), vec.end(), cmp);
+for(std::vector<Coordinate>::iterator i = vec.begin(); i!=vec.end(); i++)
+{
+    std::cout << rotation(*i) << ' '<< *i << std::endl;
+}
 
     std::stack<Coordinate> stack;
     stack.push(low);
@@ -88,6 +92,7 @@ std::stack<Coordinate> graham_scan (std::vector<Coordinate>& vec)
         }
         stack.push(new_c);
     }
+    stack.push(low);
 
     return stack;
 }

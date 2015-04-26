@@ -33,14 +33,28 @@ std::vector<Coordinate> gen_data(int n)
     return vec;
 }
 
-void write_data (const char* file, std::vector<Coordinate>& vec)
+void write_data_vector (const char* file, std::vector<Coordinate>& vec)
 {
     std::ofstream myfile;
     myfile.open(file);
 
     for(int i = 0; i<vec.size(); i++)
     {
-        myfile << vec[i] << std::endl;
+        myfile << vec[i];
+    }
+
+    myfile.close();
+}
+
+void write_data_stack (const char* file, std::stack<Coordinate>& stack)
+{
+    std::ofstream myfile;
+    myfile.open(file);
+
+    while(!stack.empty())
+    {
+        myfile << stack.top();
+        stack.pop();
     }
 
     myfile.close();
