@@ -4,4 +4,4 @@
 #include <algorithm>
 #include "data.hpp"
 
-std::stack<Coordinate> graham_scan (std::vector<Coordinate>&);
+std::vector<Point> graham_scan (std::vector<Point>);

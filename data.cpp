@@ -1,12 +1,12 @@
 #include "data.hpp"
 
-bool Coordinate::operator== (const Coordinate& c) const
+bool Point::operator== (const Point& c) const
 {
     if(this->x == c.x && this->y == c.y) return true;
     return false;
 }
 
-bool Coordinate::operator> (const Coordinate& c) const
+bool Point::operator> (const Point& c) const
 {
     if(this->y > c.get_y()) return true;
     if(this->y == c.get_y())
@@ -17,7 +17,20 @@ bool Coordinate::operator> (const Coordinate& c) const
     return false;
 }
 
-std::ostream& operator<< (std::ostream& os, const Coordinate& c)
+Point Point::operator+ (const Point& c) const
+{
+    Point out(this->x + c.get_x(), this->y + c.get_y());
+    return out;
+}
+
+Point Point::operator- (const Point& c) const
+{
+    Point out(this->x - c.get_x(), this->y - c.get_y());
+    return out;
+}
+
+
+std::ostream& operator<< (std::ostream& os, const Point& c)
 {
     os << c.x << ' ' << c.y << std::endl;
 

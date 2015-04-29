@@ -3,20 +3,22 @@
 
 #include <iostream>
 
-class Coordinate
+class Point
 {
     private:
         int x, y;
     public:
-        Coordinate() {}
-        Coordinate(int x, int y) : x(x), y(y) {}
+        Point() {}
+        Point(int x, int y) : x(x), y(y) {}
 
         int get_x() const { return x; }
         int get_y() const { return y; }
 
-        bool operator== (const Coordinate& c) const;
-        bool operator> (const Coordinate& c) const;
-        friend std::ostream& operator<< (std::ostream& os, const Coordinate& c);
+        bool operator== (const Point& c) const;
+        bool operator> (const Point& c) const;
+        Point operator+ (const Point& c) const;
+        Point operator- (const Point& c) const;
+        friend std::ostream& operator<< (std::ostream& os, const Point& c);
 };
 
 #endif

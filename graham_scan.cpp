@@ -1,27 +1,24 @@
 #include "graham_scan.hpp"
 
-static Coordinate low;
+static Point low;
 
-static void find_lowest (std::vector<Coordinate>& vec)
+//Finds the lowest point according to the y coordinate, if there are
+//multiple points with the same y coordinate, selects the one with the
+//smaller x coordinate (operator>)
+static void find_lowest (std::vector<Point>& points)
 {
-    Coordinate lowest = vec[0];
-    int id = 0;
-    int len = vec.size();
+    low = points.at(0);
 
-    for(int i = 1; i<len; i++)
-    {
-        if(lowest > vec[i])
-        {
-            lowest = vec[i];
-            id = i;
-        }
-    }
+    for(std::vector<Point>::iterator i = points.begin(); i != points.end(); i++)
+        if(low > *i) low = *i;
 
-    vec.erase(vec.begin() + id);
-    low = lowest;
+    //TODO: Should I delete the lowest point from points?
+    std::vector<Point>::iterator low_id = std::find(points.begin(), points.end(), low);
+    points.erase(low_id);
 }
 
-static double distance (Coordinate a, Coordinate b)
+//Returns the distance between 2 points
+static double distance (Point a, Point b)
 {
     int x = a.get_x() - b.get_x();
     int y = a.get_y() - b.get_y();
@@ -29,26 +26,21 @@ static double distance (Coordinate a, Coordinate b)
     return std::sqrt(x*x + y*y);
 }
 
-static double rotation (Coordinate c)
+//Returns a degree under which the given c point can be seen from the
+//lowest point (low)
+static double rotation (Point c)
 {
     int y = c.get_y() - low.get_y();
     double angle = std::asin(y / distance(c, low)) * 180 / M_PI;
 
-    if(c.get_x() < low.get_x()) angle += 90 - angle;
+    if(c.get_x() < low.get_x()) angle = 180 - angle;
 
     return angle; //in rad
 }
 
-static bool cmp (Coordinate a, Coordinate b)
-{
-    double rot_a = rotation(a);
-    double rot_b = rotation(b);
-
-    if(rot_a == rot_b) return distance(a, low) < distance(b,low);
-    return rotation(a) < rotation(b);
-}
-
-static int rotation_section(Coordinate beg, Coordinate end, Coordinate new_p)
+//Return whethr the new point is to the left from the given section or
+//to the right or they are at the same line.
+static int rotation_section(Point beg, Point end, Point new_p)
 {
     double val = (end.get_x() - beg.get_x()) *
                  (new_p.get_y() - beg.get_y()) -
@@ -60,39 +52,50 @@ static int rotation_section(Coordinate beg, Coordinate end, Coordinate new_p)
     return 0;
 }
 
-std::stack<Coordinate> graham_scan (std::vector<Coordinate>& vec)
+static bool cmp (Point a, Point b)
 {
-find_lowest(vec);
-std::sort(vec.begin(), vec.end(), cmp);
-for(std::vector<Coordinate>::iterator i = vec.begin(); i!=vec.end(); i++)
-{
-    std::cout << rotation(*i) << ' '<< *i << std::endl;
+    double rot_a = rotation(a);
+    double rot_b = rotation(b);
+
+    if(rot_a == rot_b) return distance(a, low) < distance(b,low);
+    return rotation(a) < rotation(b);
 }
 
-    std::stack<Coordinate> stack;
-    stack.push(low);
-    stack.push(vec.at(0));
-    stack.push(vec.at(1));
-
-    for(int i = 2; i<vec.size(); i++)
+//Implements graham scan, return a vector containing the convex hall
+std::vector<Point> graham_scan (std::vector<Point> points)
+{
+    find_lowest(points);
+    std::sort(points.begin(), points.end(), cmp);
+    for(std::vector<Point>::iterator i = points.begin(); i!=points.end(); i++)
     {
-        Coordinate new_c = vec.at(i);
+        std::cout << rotation(*i) << ' '<< *i << std::endl;
+    }
+
+    std::vector<Point> stack;
+    stack.push_back(low);
+    stack.push_back(points.at(0));
+    stack.push_back(points.at(1));
+
+    for(int i = 2; i<points.size(); i++)
+    {
+        Point new_c = points.at(i);
 
         while(1)
         {
-            Coordinate top = stack.top();
-            stack.pop();
-            Coordinate top_1 = stack.top();
+            std::vector<Point>::iterator i = stack.end();
+            Point top = *(--i); //does not get the right value
+            Point top_1 = *(--i); //but it gets
 
             if(rotation_section(top_1, top, new_c) == 1)
             {
-                stack.push(top);
                 break;
             }
+
+            stack.erase(stack.end());
         }
-        stack.push(new_c);
+        stack.push_back(new_c);
     }
-    stack.push(low);
+    stack.push_back(low);
 
     return stack;
 }
