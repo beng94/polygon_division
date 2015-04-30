@@ -66,10 +66,6 @@ std::vector<Point> graham_scan (std::vector<Point> points)
 {
     find_lowest(points);
     std::sort(points.begin(), points.end(), cmp);
-    for(std::vector<Point>::iterator i = points.begin(); i!=points.end(); i++)
-    {
-        std::cout << rotation(*i) << ' '<< *i << std::endl;
-    }
 
     std::vector<Point> stack;
     stack.push_back(low);

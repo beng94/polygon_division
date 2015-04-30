@@ -63,77 +63,81 @@ void include_all_points(std::vector<Point> points, std::vector<Point>& polygon)
     std::vector<Closest> dist;
     for(std::vector<Point>::iterator i = points.begin(); i!=points.end(); i++)
     {
-        Point p1 = *(polygon.begin());
-        Point p2 = *(polygon.begin() + 1);
-        double min_dist = point_line_dist(p1, p2, (*i));
+        std::vector<Point>::iterator p1 = polygon.begin();
+        double min_dist = point_line_dist(*p1, *(p1+1), (*i));
 
-        for(std::vector<Point>::iterator j = polygon.begin() + 1; j != polygon.end(); j++)
+        for(std::vector<Point>::iterator j = polygon.begin() + 1; j != polygon.end() - 1; j++)
         {
-            Point seg_beg = *j;
-            Point seg_end = *(j + 1);
-            double dist = point_line_dist(seg_beg, seg_end, *i);
+            double dist = point_line_dist(*j, *(j+1), *i);
 
             if(dist < min_dist)
             {
-                p1 = seg_beg;
-                p2 = seg_end;
+                p1 = j;
                 min_dist = dist;
             }
         }
 
-        Closest new_clo (p1, p2, *i, min_dist);
+        Closest new_clo (p1, i, min_dist);
         dist.push_back(new_clo);
     }
 
-    //Sort points by distance, increasing
-    std::sort(dist.begin(), dist.end(), cmp);
-
     while(!dist.empty())
     {
-        //TODO: should store iterator in closest, wouldn't have to go through the array
-        Point p1 = dist.at(0).get_p1();
-        for(std::vector<Point>::iterator i = polygon.begin(); i != polygon.end(); i++)
+        //finding the point with the minimal distance form segments
+        std::vector<Closest>::iterator min_dist = dist.begin();
+        for(std::vector<Closest>::iterator i = dist.begin() + 1; i != dist.end(); i++)
         {
-            if((*i) == p1)
+            if((*min_dist).get_dist() > (*i).get_dist())
+                min_dist = i;
+        }
+
+        //insert the new point into the polygon
+        polygon.insert((*min_dist).get_p1(), *((*min_dist).get_point()));
+
+        //update distances in dist
+        for(std::vector<Closest>::iterator i = dist.begin(); i != dist.end(); i++)
+        {
+            //calculate new max_dist if the element was closest to the newly refreshed point
+            if((*i).get_p1() == (*min_dist).get_p1())
             {
-                //++i; //the element will be inserted before the given iterator
-                polygon.insert(i, dist.at(0).get_point());
-                print_vector("test.txt", polygon);
+                std::vector<Point>::iterator seg_beg = polygon.begin();
+                double new_dist = point_line_dist(*seg_beg, *(seg_beg+1), *((*i).get_point()));
 
-                //refresh distances
-                for(std::vector<Closest>::iterator j = dist.begin() + 1; j!= dist.end(); j++)
+                for(std::vector<Point>::iterator j = polygon.begin() + 1; j != polygon.end() - 1; j++)
                 {
-                    //i points to the end of the divided segment
-                    Point p3 = *(i);
-                    Point p2 = *(i-1);
-                    Point p1 = *(i-2);
+                    double dist = point_line_dist(*j, *(j+1), *((*i).get_point()));
 
-                    double dist_1 = point_line_dist(p3, p2, (*j).get_point());
-                    double dist_2 = point_line_dist(p2, p1, (*j).get_point());
-                    if(std::min(dist_1, dist_2) < (*j).get_dist())
+                    if(dist < new_dist)
                     {
-                        if(dist_1 < dist_2)
-                        {
-                            (*j).set_dist(dist_1);
-                            (*j).set_p1(*(i+1));
-                            (*j).set_p2(*(i+2));
-                        }
-                        else
-                        {
-                            (*j).set_dist(dist_2);
-                            (*j).set_p1(*i);
-                            (*j).set_p2(*(i+1));
-                        }
+                        seg_beg = j;
+                        new_dist = dist;
                     }
                 }
+            }
 
-                //sort the refreshed element
-                std::sort(dist.begin(), dist.end(), cmp);
+            //check the distance from the new segments
+            else
+            {
+                double dist_1 = point_line_dist(*((*min_dist).get_p1()), *((*min_dist).get_p1() + 1), *((*i).get_point()));
+                double dist_2 = point_line_dist(*((*min_dist).get_p1() + 1), *((*min_dist).get_p1() + 2), *((*i).get_point()));
 
-                break;
+                if(std::min(dist_1, dist_2) < (*i).get_dist())
+                {
+                    if(dist_1 < dist_2)
+                    {
+                        (*i).set_dist(dist_1);
+                        (*i).set_p1((*min_dist).get_p1());
+                    }
+                    else
+                    {
+                        (*i).set_dist(dist_2);
+                        (*i).set_p1((*min_dist).get_p1() + 1);
+                    }
+                }
             }
         }
 
-        dist.erase(dist.begin());
+        //delete min_dist form dist
+        dist.erase(min_dist);
     }
 }
