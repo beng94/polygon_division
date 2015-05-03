@@ -2,30 +2,30 @@
 static const int X_RANGE = 5000;
 static const int Y_RANGE = 5000;
 
-static bool valid_point (const std::vector<Point>& points, Point tst)
+static bool valid_point (const std::list<Point>& points, Point tst)
 {
     if(std::find(points.begin(), points.end(), tst) == points.end())
         return true;
     return false;
 }
 
-std::vector<Point> gen_data(const int n)
+std::list<Point> gen_data(const int n)
 {
     std::srand(std::time(0));
-    std::vector<Point> vec;
+    std::list<Point> points;
 
-    while(vec.size() != n)
+    while(points.size() != n)
     {
         int x = std::rand() % X_RANGE;
         int y = std::rand() % Y_RANGE;
 
         Point new_point(x, y);
 
-        if(valid_point(vec, new_point))
-            vec.push_back(new_point);
+        if(valid_point(points, new_point))
+            points.push_back(new_point);
     }
 
-    return vec;
+    return points;
 }
 
 void print_vector (const char* file, const std::vector<Point>& points)

@@ -21,4 +21,4 @@ public:
 };
 
 double point_line_dist (Point, Point, Point);
-void include_all_points(std::vector<Point>, std::list<Point>&);
+std::list<Point> include_all_points(std::list<Point>&);

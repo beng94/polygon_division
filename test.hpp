@@ -7,6 +7,6 @@
 #include <ctime>
 #include "data.hpp"
 
-std::vector<Point> gen_data (const int n);
+std::list<Point> gen_data (const int n);
 void print_vector (const char* file, const std::vector<Point>& vec);
 void print_list (const char* file, const std::list<Point>& list);

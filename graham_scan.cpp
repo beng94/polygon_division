@@ -5,15 +5,15 @@ static Point low;
 //Finds the lowest point according to the y coordinate, if there are
 //multiple points with the same y coordinate, selects the one with the
 //smaller x coordinate (operator>)
-static void find_lowest (std::vector<Point>& points)
+static void find_lowest (std::list<Point>& points)
 {
-    low = points.at(0);
+    low = points.front();
 
-    for(std::vector<Point>::iterator i = points.begin(); i != points.end(); i++)
+    for(std::list<Point>::iterator i = points.begin(); i != points.end(); i++)
         if(low > *i) low = *i;
 
     //TODO: Should I delete the lowest point from points?
-    std::vector<Point>::iterator low_id = std::find(points.begin(), points.end(), low);
+    std::list<Point>::iterator low_id = std::find(points.begin(), points.end(), low);
     points.erase(low_id);
 }
 
@@ -52,7 +52,7 @@ static int rotation_section(Point beg, Point end, Point new_p)
     return 0;
 }
 
-static bool cmp (Point a, Point b)
+static bool cmp (const Point& a, const Point& b)
 {
     double rot_a = rotation(a);
     double rot_b = rotation(b);
@@ -62,19 +62,22 @@ static bool cmp (Point a, Point b)
 }
 
 //Implements graham scan, return a vector containing the convex hall
-std::list<Point> graham_scan (std::vector<Point> points)
+std::list<Point> graham_scan (std::list<Point> points)
 {
     find_lowest(points);
-    std::sort(points.begin(), points.end(), cmp);
+    points.sort(cmp);
 
     std::list<Point> stack;
-    stack.push_back(low);
-    stack.push_back(points.at(0));
-    stack.push_back(points.at(1));
+    std::list<Point>::iterator first = points.begin();
+    std::list<Point>::iterator second = ++first; --first;
 
-    for(int i = 2; i<points.size(); i++)
+    stack.push_back(low);
+    stack.push_back(*first);
+    stack.push_back(*second);
+
+    for(std::list<Point>::iterator i = second; i != points.end(); i++)
     {
-        Point new_c = points.at(i);
+        Point new_c = *i;
 
         while(1)
         {
