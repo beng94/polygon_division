@@ -32,7 +32,7 @@ Point Point::operator- (const Point& c) const
 
 std::ostream& operator<< (std::ostream& os, const Point& c)
 {
-    os << c.x << ' ' << c.y << std::endl;
+    os << c.x << ' ' << c.y;
 
     return os;
 }

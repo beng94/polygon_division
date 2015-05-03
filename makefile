@@ -4,4 +4,5 @@ all:
 	graham_scan.hpp graham_scan.cpp \
 	test.hpp test.cpp \
 	data.hpp data.cpp \
-	polygon_division.hpp polygon_division.cpp
+	polygon_division.hpp polygon_division.cpp \
+	geometria.h geometria.cpp

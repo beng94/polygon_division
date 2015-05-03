@@ -34,7 +34,18 @@ void print_vector (const char* file, const std::vector<Point>& points)
     myfile.open(file);
 
     for(std::vector<Point>::const_iterator i = points.begin(); i != points.end(); i++)
-        myfile << *i;
+        myfile << *i << std::endl;
+
+    myfile.close();
+}
+
+void print_list (const char* file, const std::list<Point>& points)
+{
+    std::ofstream myfile;
+    myfile.open(file);
+
+    for(std::list<Point>::const_iterator i = points.begin(); i != points.end(); i++)
+        myfile << *i << std::endl;
 
     myfile.close();
 }

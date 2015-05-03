@@ -1,7 +1,7 @@
 #include <vector>
-#include <stack>
+#include <list>
 #include <cmath>
 #include <algorithm>
 #include "data.hpp"
 
-std::vector<Point> graham_scan (std::vector<Point>);
+std::list<Point> graham_scan (std::vector<Point>);

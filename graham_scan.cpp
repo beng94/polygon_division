@@ -62,12 +62,12 @@ static bool cmp (Point a, Point b)
 }
 
 //Implements graham scan, return a vector containing the convex hall
-std::vector<Point> graham_scan (std::vector<Point> points)
+std::list<Point> graham_scan (std::vector<Point> points)
 {
     find_lowest(points);
     std::sort(points.begin(), points.end(), cmp);
 
-    std::vector<Point> stack;
+    std::list<Point> stack;
     stack.push_back(low);
     stack.push_back(points.at(0));
     stack.push_back(points.at(1));
@@ -78,7 +78,7 @@ std::vector<Point> graham_scan (std::vector<Point> points)
 
         while(1)
         {
-            std::vector<Point>::iterator i = stack.end();
+            std::list<Point>::iterator i = stack.end();
             Point top = *(--i); //does not get the right value
             Point top_1 = *(--i); //but it gets
 
@@ -87,7 +87,7 @@ std::vector<Point> graham_scan (std::vector<Point> points)
                 break;
             }
 
-            stack.erase(stack.end());
+            stack.pop_back();
         }
         stack.push_back(new_c);
     }
