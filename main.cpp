@@ -5,7 +5,7 @@
 int main(void)
 {
     //Generating points
-    std::list<Point> points = gen_data(200);
+    std::list<Point> points = gen_data(500);
     print_list("points.txt", points);
 
     //Include all points in the concave polygon

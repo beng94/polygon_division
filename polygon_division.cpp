@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include "geometria.h"
 #include "graham_scan.hpp"
+#include <limits>
 
 static double point_point_dist (Point p1, Point p2)
 {
@@ -84,226 +85,230 @@ static void delete_points(const std::list<Point> del_points, std::list<Point>& p
     }
 }
 
+//Checks whether point can be connected to the p1-p2 segment
+static bool valid_segment (Point p1, Point p2, Point p3, Point point)
+{
+    Pont _p1 ((p1).get_x(), (p1).get_y());
+    Pont _p2 ((p2).get_x(), (p2).get_y());
+    Pont _p3 ((p3).get_x(), (p3).get_y());
+
+    Egyenes e1(_p1, _p2);
+
+    int x = point.get_x();
+    int y = point.get_y();
+    double _y1 = e1.getM()*x + e1.getC();
+
+    if(p1 > p2 && p3 > p2)
+    {
+        std::cout << point<< " " << 1 << " " << p1 <<  std::endl;
+        if((p2).get_x() > (p1).get_x())
+        {
+            if(y > _y1)
+            {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        else
+        {
+            if(y < _y1)
+            {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+    }
+    else if(p1 > p2 && p2 > p3)
+    {
+        std::cout << point << " " << 2 << " " << p1 << std::endl;
+        if((p2).get_x() > (p1).get_x())
+        {
+            if(y > _y1)
+            {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        else {
+            if(y < _y1)
+            {
+                return true;
+            }
+           else {
+                return false;
+            }
+        }
+    }
+    else if(p2 > p1 && p2 > p3)
+    {
+        std::cout << point << " " << 3 << " " << p1 << std::endl;
+        if((p2).get_x() > (p1).get_x())
+        {
+            if(y > _y1)
+            {
+                return true;
+            }
+            else {
+                return false;
+            }
+
+        }
+        else
+        {
+            if(y < _y1)
+            {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+    }
+    else if(p2 > p1 && p3 > p2)
+    {
+        std::cout << point << " " << 4 << " " << p1 << std::endl;
+        if((p2).get_x() > (p1).get_x())
+        {
+            if(_y1 < y)
+            {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        else {
+            if(_y1 > y)
+            {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+    }
+    else {
+        std::cout << "not all cases covered" << std::endl;
+        getchar();
+        return true;
+    }
+}
+
 std::list<Point> include_all_points(std::list<Point>& points)
 {
     std::list<Point> polygon = graham_scan(points);
     delete_points(polygon, points);
 
     FILE *pipe = popen("gnuplot -persist", "w");
-    while(!points.empty())
+    while(points.size() >= 3)
     {
         std::list<Point> convex_hull = graham_scan(points);
         delete_points(convex_hull, points);
 
-        print_list("conv_hull.txt", convex_hull);
-         fprintf(pipe, "plot 'points.txt' using 1:2, 'conv_hull.txt' using 1:2 with lines, 'polygon.txt' using 1:2 with line\n");
-         fflush(pipe);
-         getchar();
-
-
-        for(std::list<Point>::iterator i = convex_hull.begin(); i != convex_hull.end(); i++)
+        for(std::list<Point>::iterator i = convex_hull.begin(); i != --convex_hull.end(); i++)
         {
             //find minimal distance
-            std::list<Point>::iterator p1 = polygon.begin();
-            std::list<Point>::iterator p2 = ++(polygon.begin());
-            double dist = point_line_dist(*p1, *p2, *i);
+            std::list<Point>::iterator p1;
+            double dist = std::numeric_limits<double>::infinity();
+            double seg_length = std::numeric_limits<double>::infinity();
 
-            for(std::list<Point>::iterator j = p2; j != polygon.end(); j++)
+            for(std::list<Point>::iterator j = polygon.begin(); j != polygon.end(); j++)
             {
                 std::list<Point>::iterator tmp_p1 = j;
                 std::list<Point>::iterator tmp_p2 = ++j; --j;
+                //TODO: might cause seg_fault if it's at the end of the polygon
+                std::list<Point>::iterator tmp_p3 = ++tmp_p2; --tmp_p2;
                 double tmp_dist = point_line_dist(*tmp_p1, *tmp_p2, *i);
+                double tmp_seg_lengths = point_point_dist(*tmp_p1, *i) + point_point_dist(*tmp_p2, *i);
 
-                if(tmp_dist < dist)
+                if(tmp_dist < dist && tmp_seg_lengths < seg_length)
                 {
-                    dist = tmp_dist;
-                    //TODO: or maybe tmp_p2??
-                    p1 = tmp_p1;
+                    if(tmp_dist < std::min(point_point_dist(*tmp_p1, *i), point_point_dist(*tmp_p2, *i)))
+                    {
+                        dist = tmp_dist;
+                        p1 = tmp_p1;
+                    }
+                    else if(valid_segment(*tmp_p1, *tmp_p2, *tmp_p3, *i))
+                    {
+                        dist = tmp_dist;
+                        p1 = tmp_p1;
+                    }
+                }
+            }
+
+            polygon.insert(++p1, *i);
+
+            /*
+            print_list("polygon.txt", polygon);
+            print_list("convex_hull.txt", convex_hull);
+            fprintf(pipe, "plot 'points.txt' using 1:2, 'convex_hull.txt' using 1:2 with lines, 'polygon.txt' using 1:2 with line\n");
+            fflush(pipe);
+            getchar();
+            */
+        }
+
+        print_list("polygon.txt", polygon);
+
+        //fprintf(pipe, "plot 'points.txt' using 1:2, 'polygon.txt' using 1:2 with line\n");
+        //fflush(pipe);
+        //usleep(500000);
+        //getchar();
+    }
+
+    if(!points.empty())
+    {
+        for(std::list<Point>::iterator i = points.begin(); i != points.end(); i++)
+        {
+            //find minimal distance
+            std::list<Point>::iterator p1;
+            double dist = std::numeric_limits<double>::infinity();
+            double seg_length = std::numeric_limits<double>::infinity();
+
+            for(std::list<Point>::iterator j = polygon.begin(); j != polygon.end(); j++)
+            {
+                std::list<Point>::iterator tmp_p1 = j;
+                std::list<Point>::iterator tmp_p2 = ++j; --j;
+                //TODO: might cause seg_fault if it's at the end of the polygon
+                std::list<Point>::iterator tmp_p3 = ++tmp_p2; --tmp_p2;
+                double tmp_dist = point_line_dist(*tmp_p1, *tmp_p2, *i);
+                double tmp_seg_lengths = point_point_dist(*tmp_p1, *i) + point_point_dist(*tmp_p2, *i);
+
+
+
+                if(tmp_dist < dist && tmp_seg_lengths < seg_length)
+                {
+                    if(tmp_dist < std::min(point_point_dist(*tmp_p1, *i), point_point_dist(*tmp_p2, *i)))
+                    {
+                        dist = tmp_dist;
+                        p1 = tmp_p1;
+                    }
+                    else if(valid_segment(*tmp_p1, *tmp_p2, *tmp_p3, *i))
+                    {
+                        dist = tmp_dist;
+                        p1 = tmp_p1;
+                    }
                 }
             }
 
             polygon.insert(++p1, *i);
         }
 
-        print_list("polygon.txt", polygon);
-
-         fprintf(pipe, "plot 'points.txt' using 1:2, 'polygon.txt' using 1:2 with line\n");
-         fflush(pipe);
-         //usleep(500000);
-         getchar();
-
     }
+
+    print_list("polygon.txt", polygon);
+
+    fprintf(pipe, "plot 'polygon.txt' using 1:2 with line\n");
+    fflush(pipe);
+    //usleep(500000);
+    //getchar();
 
     pclose(pipe);
 
-    /*
-    FILE *pipe = popen("gnuplot -persist", "w");
-    while(!dist.empty())
-    {
-        //finding the point with the minimal distance form segments
-        std::list<Closest>::iterator min_dist = dist.begin();
-        for(std::list<Closest>::iterator i = ++dist.begin(); i != dist.end(); i++)
-        {
-            if((*min_dist).get_dist() > (*i).get_dist())
-                min_dist = i;
-        }
-
-        //insert the new point into the polygon
-        polygon.insert(++(*min_dist).get_p1(), *((*min_dist).get_point())); --(*min_dist).get_p1();
-        print_list("new_polygon.txt", polygon);
-
-        if(pipe == NULL) std::cout << "fuck you";
-        fprintf(pipe, "plot 'points.txt' using 1:2, 'convex_hull.txt' using 1:2 with lines, 'new_polygon.txt' using 1:2 with line\n");
-        fflush(pipe);
-        //usleep(500000);
-        getchar();
-
-        //delete min_dist form dist
-        dist.erase(min_dist);
-
-        std::cout << *((*min_dist).get_p1()) << std::endl;
-
-        //update distances in dist
-        for(std::list<Closest>::iterator i = dist.begin(); i != dist.end(); i++)
-        {
-            //check the distance from the new segments
-            std::list<Point>::iterator p1 = (*min_dist).get_p1();
-            std::list<Point>::iterator p2 = ++p1; --p1;
-            std::list<Point>::iterator p3 = ++p2; --p2;
-            double dist_1 = point_line_dist(*(p1), *(p2), *((*i).get_point()));
-            double dist_2 = point_line_dist(*(p2), *(p3), *((*i).get_point()));
-
-            if(std::min(dist_1, dist_2) < (*i).get_dist())
-            {
-                if(dist_1 == dist_2)
-                {
-                    Pont _p1 ((*p1).get_x(), (*p1).get_y());
-                    Pont _p2 ((*p2).get_x(), (*p2).get_y());
-                    Pont _p3 ((*p3).get_x(), (*p3).get_y());
-
-                    Egyenes e1(_p1, _p2);
-
-                    int x = (*(*i).get_point()).get_x();
-                    int y = (*(*i).get_point()).get_y();
-                    double _y1 = e1.getM()*x + e1.getC();
-
-                    if(*p1 > *p2 && *p3 > *p2)
-                    {
-                        if((*p2).get_x() > (*p1).get_x())
-                        {
-                            if(y > _y1)
-                            {
-                                (*i).set_p1(p1);
-                            }
-                            else {
-                                (*i).set_p1(p2);
-                            }
-                        }
-                        else
-                        {
-                            if(y < _y1)
-                            {
-                                (*i).set_p1(p1);
-                            }
-                            else {
-                                (*i).set_p1(p2);
-                            }
-                        }
-
-                        std::cout << 1 << " " << *p1 << " " << dist_1 << std::endl;
-                    }
-                    else if(*p1 > *p2 && *p2 > *p3)
-                    {
-                        if((*p2).get_x() > (*p1).get_x())
-                        {
-                            if(y > _y1)
-                            {
-                                (*i).set_p1(p1);
-                            }
-                            else {
-                                (*i).set_p1(p2);
-                            }
-                        }
-                        else {
-                            if(y < _y1)
-                            {
-                                (*i).set_p1(p1);
-                            }
-                           else {
-                                (*i).set_p1(p2);
-                            }
-                        }
-
-                        std::cout << 2 << " "<< *p1 << " "<< dist_1 << std::endl;
-                    }
-                    else if(*p2 > *p1 && *p2 > *p3)
-                    {
-                        if((*p2).get_x() > (*p1).get_x())
-                        {
-                            if(y > _y1)
-                            {
-                                (*i).set_p1(p1);
-                            }
-                            else {
-                                (*i).set_p1(p2);
-                            }
-
-                        }
-                        else
-                        {
-                            if(y < _y1)
-                            {
-                                (*i).set_p1(p1);
-                            }
-                            else {
-                                (*i).set_p1(p2);
-                            }
-                        }
-                        std::cout << 3 << " " << *p1 << " "<< dist_1 <<std::endl;
-                    }
-                    else if(*p2 > *p1 && *p3 > *p2)
-                    {
-                        if((*p2).get_x() > (*p1).get_x())
-                        {
-                            if(_y1 < y)
-                            {
-                                (*i).set_p1(p1);
-                            }
-                            else {
-                                (*i).set_p1(p2);
-                            }
-                        }
-                        else {
-                            if(_y1 > y)
-                            {
-                                (*i).set_p1(p1);
-                            }
-                            else {
-                                (*i).set_p1(p2);
-                            }
-                        }
-                        std::cout << 4 << " "<<*p1 << " " << dist_1 <<std::endl;
-                    }
-                    else {
-                        std::cout << "not all cases covered" << std::endl;
-                    }
-                    (*i).set_dist(dist_1);
-                }
-                else if (dist_1 < dist_2)
-                {
-                    (*i).set_dist(dist_1);
-                    (*i).set_p1(p1);
-                }
-                else
-                {
-                    (*i).set_dist(dist_2);
-                    (*i).set_p1(p2);
-                }
-
-            }
-        }
-
-    }
-    pclose(pipe);
-    */
+    return polygon;
 }
